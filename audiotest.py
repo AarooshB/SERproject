@@ -1,21 +1,24 @@
 import sounddevice as sd
+import numpy as np
 from scipy.io.wavfile import write
-sd.default.device = (24, None)
-fs = 44100  # sample rate
-seconds = 5
 
-print("Recording...")
-audio = sd.rec(int(seconds * fs), samplerate=fs, channels=1, dtype='int16')
+device_id = 0
+fs = 44100
+seconds = 3
+
+print("Recording from device", device_id)
+
+audio = sd.rec(
+    int(seconds * fs),
+    samplerate=fs,
+    channels=1,
+    dtype="float32",
+    device=device_id
+)
 sd.wait()
-print("Recording complete")
 
-# save file
-filename = "test_audio.wav"
-write(filename, fs, audio)
-print(f"Saved to {filename}")
+print("max:", np.max(np.abs(audio)))
+print("std:", np.std(audio))
 
-# playback
-print("Playing back...")
-sd.play(audio, fs)
-sd.wait()
-print("Done")
+write("test_audio.wav", fs, np.int16(audio * 32767))
+print("Saved test_audio.wav")
