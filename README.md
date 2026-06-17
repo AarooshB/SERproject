@@ -130,4 +130,3 @@ Aaroosh Balakrishnan
 
 University of California, Los Angeles
 
-Research interests: Brain-computer interfaces, machine learning, speech processing, and digital health technologies.
