@@ -1,0 +1,23 @@
+              precision    recall  f1-score   support
+
+neutral_calm     0.8405    0.6771    0.7500       288
+       happy     0.6147    0.6979    0.6537       192
+         sad     0.5702    0.6771    0.6190       192
+       angry     0.8182    0.8438    0.8308       192
+     disgust     0.8764    0.8125    0.8432       192
+   surprised     0.7990    0.8073    0.8031       192
+
+    accuracy                         0.7468      1248
+   macro avg     0.7532    0.7526    0.7500      1248
+weighted avg     0.7599    0.7468    0.7500      1248
+
+
+CV macro F1 = 0.7480 +/- 0.0691 over 6 speaker-independent folds
+
+Confusion matrix:
+[[195  25  58   7   1   2]
+ [  7 134  16   9   4  22]
+ [ 26  23 130   2   6   5]
+ [  1   9   6 162   6   8]
+ [  2   8   9  15 156   2]
+ [  1  19   9   3   5 155]]

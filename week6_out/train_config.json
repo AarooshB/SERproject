@@ -1,0 +1,13 @@
+{
+  "emb": "ravdess_embeddings_v6.npz",
+  "head": "mlp2",
+  "loss": "focal",
+  "gamma": 1.5,
+  "folds": 6,
+  "epochs": 200,
+  "lr": 0.0003,
+  "wd": 0.001,
+  "dropout": 0.3,
+  "feat_dropout": 0.1,
+  "out_dir": "week6_out"
+}
