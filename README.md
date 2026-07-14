@@ -4,6 +4,8 @@ Real-time Speech Emotion Recognition (SER) using deep learning and transformer-b
 
 This project explores automatic speech emotion recognition from audio recordings using both traditional deep learning architectures and pretrained speech transformers. The primary goal is to build a model that can classify human emotions from speech while remaining lightweight enough for real-time deployment on NVIDIA Jetson devices.
 
+DEMO LINK:
+https://drive.google.com/drive/u/0/folders/1DE4-ThQO9VLnjqozcJXxqJOTWTJzuThR
 ---
 
 ## Highlights
