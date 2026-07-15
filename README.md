@@ -1,4 +1,4 @@
-# SERproject
+# Real-Time Speech Emotion Recognition on Edge Devices
 
 Real-time Speech Emotion Recognition (SER) using deep learning and transformer-based speech models.
 
