@@ -142,7 +142,7 @@ Added:
 
 ---
 
-### Week 6 (Current Model)
+### Model 6 (Current Model)
 
 Major improvements:
 
@@ -205,7 +205,7 @@ Validation data is kept completely clean to prevent data leakage.
 
 ## Results
 
-### Final Week 6 Results
+### Final Model 6 Results
 
 | Metric                    |                                       Value |
 | :------------------------ | ------------------------------------------: |
@@ -233,14 +233,39 @@ The DistilHuBERT model significantly outperformed the earlier CNN-based approach
 
 ```text
 SERproject/
-│
-├── extract_embeddings_v6.py
-├── train_v6.py
-├── model_v6.py
-├── live_infer_v6.py
-├── week6_out/
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+│
+├── data/
+│   ├── ravdess/              # RAVDESS dataset (Actor_01 .. Actor_24)
+│   ├── all_audio/            # Flat RAVDESS wavs for feature extraction
+│   └── cremad/               # CREMA-D dataset (AudioWAV/)
+│
+├── features/
+│   ├── mfcc/                 # Raw MFCC features
+│   ├── mfcc_norm/            # Normalized MFCC (models 1–4)
+│   ├── mel/                  # Mel spectrogram features
+│   └── v5_norm/              # Model 5 combined features
+│
+├── models/
+│   ├── model_01_mfcc_cnn/
+│   ├── model_02_mfcc_cnn_narrow/
+│   ├── model_03_balanced/
+│   ├── model_04_bigru/
+│   ├── model_05_cremad/
+│   └── model_06_distilhubert/   # Main model
+│       ├── backbone.py
+│       ├── model.py
+│       ├── extract_embeddings.py
+│       ├── train.py
+│       ├── live_infer.py
+│       ├── embeddings/
+│       ├── checkpoints/
+│       └── results/             # Training outputs (was week6_out)
+│
+├── notebooks/
+├── scripts/
+└── debug/
 ```
 
 ---
@@ -250,14 +275,17 @@ SERproject/
 ### 1. Extract DistilHuBERT Embeddings
 
 ```bash
-python extract_embeddings_v6.py
+python models/model_06_distilhubert/extract_embeddings.py \
+    --ravdess_dir data/ravdess \
+    --include_cremad \
+    --cremad_dir data/cremad \
+    --n_aug 2
 ```
 
 ### 2. Train the Model
 
 ```bash
-python train_v6.py \
-    --emb ravdess_embeddings_v6.npz \
+python models/model_06_distilhubert/train.py \
     --head mlp2 \
     --loss focal \
     --gamma 1.5 \
@@ -267,9 +295,9 @@ python train_v6.py \
 ### 3. Run Live Inference
 
 ```bash
-python live_infer_v6.py \
+python models/model_06_distilhubert/live_infer.py \
     --source mic \
-    --ckpt week6_out/best_model.pt
+    --ckpt models/model_06_distilhubert/results/best_model.pt
 ```
 
 ---

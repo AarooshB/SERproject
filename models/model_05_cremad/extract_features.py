@@ -33,9 +33,11 @@ import librosa
 # Config
 # -------------------------
 
-RAVDESS_DIR = Path("all_audio")      # your existing RAVDESS wavs
-CREMA_DIR = Path("CREMA-D/AudioWAV") # adjust to wherever you unzip CREMA-D
-SAVE_DIR = Path("features_v5_norm")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+RAVDESS_DIR = REPO_ROOT / "data" / "all_audio"
+CREMA_DIR = REPO_ROOT / "data" / "cremad" / "AudioWAV"
+SAVE_DIR = REPO_ROOT / "features" / "v5_norm"
 
 SAMPLE_RATE = 16000
 N_MFCC = 40

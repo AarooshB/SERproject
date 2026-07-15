@@ -1,5 +1,5 @@
 {
-  "emb": "ravdess_embeddings_v6.npz",
+  "emb": "models/model_06_distilhubert/embeddings/ravdess_embeddings_v6.npz",
   "head": "mlp2",
   "loss": "focal",
   "gamma": 1.5,
@@ -9,5 +9,5 @@
   "wd": 0.001,
   "dropout": 0.3,
   "feat_dropout": 0.1,
-  "out_dir": "week6_out"
+  "out_dir": "models/model_06_distilhubert/results"
 }

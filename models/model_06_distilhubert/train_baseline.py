@@ -35,6 +35,7 @@ Field 7 is the actor id.
 import argparse
 import glob
 import os
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -45,10 +46,14 @@ from sklearn.model_selection import GroupKFold
 import librosa
 from transformers import AutoFeatureExtractor
 
-from model import (
+from backbone import (
     DistilHubertClassifier, EMOTIONS, NUM_CLASSES,
     DISTILHUBERT_NAME, SAMPLE_RATE,
 )
+
+MODEL_DIR = Path(__file__).resolve().parent
+DEFAULT_CACHE = MODEL_DIR / "embeddings" / "ravdess_embeddings.npz"
+DEFAULT_CKPT = MODEL_DIR / "checkpoints" / "distilhubert_ser.pt"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -95,8 +100,10 @@ def index_ravdess(data_dir):
 # 2. Precompute pooled DistilHuBERT embeddings (frozen backbone).
 #    One 768-d vector per clip. Cached to disk so re-runs are instant.
 # ---------------------------------------------------------------------------
-def compute_embeddings(items, cache_path="ravdess_embeddings.npz",
+def compute_embeddings(items, cache_path=None,
                        max_seconds=3.0):
+    if cache_path is None:
+        cache_path = DEFAULT_CACHE
     if os.path.exists(cache_path):
         print(f"Loading cached embeddings from {cache_path}")
         d = np.load(cache_path, allow_pickle=True)
@@ -225,7 +232,9 @@ def run_cv(X, y, actors, folds=6):
 #    We instantiate the FULL model (backbone + head) and copy head weights in,
 #    so live_infer.py loads one clean state_dict.
 # ---------------------------------------------------------------------------
-def save_head(head, out_path="distilhubert_ser.pt"):
+def save_head(head, out_path=None):
+    if out_path is None:
+        out_path = DEFAULT_CKPT
     full = DistilHubertClassifier(freeze_backbone=True)
     # copy the standalone linear head weights into the model's head
     with torch.no_grad():
@@ -243,7 +252,7 @@ def main():
     ap.add_argument("--data_dir", required=True, help="path to RAVDESS root")
     ap.add_argument("--mode", choices=["split", "cv"], default="cv")
     ap.add_argument("--folds", type=int, default=6)
-    ap.add_argument("--cache", default="ravdess_embeddings.npz")
+    ap.add_argument("--cache", default=str(DEFAULT_CACHE))
     args = ap.parse_args()
 
     items = index_ravdess(args.data_dir)

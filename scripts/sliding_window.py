@@ -3,7 +3,10 @@ import numpy as np
 import librosa
 
 # ===== CONFIG =====
-AUDIO_DIR = "all_audio"
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+AUDIO_DIR = REPO_ROOT / "data" / "all_audio"
 SAVE_DIR = "audio_windows"
 
 SAMPLE_RATE = 16000
