@@ -12,7 +12,11 @@ import sounddevice as sd
 # CONFIG
 # =====================
 
-CHECKPOINT_PATH = "model4_ser_mfcc_6class_best.pt"
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MODEL_DIR = Path(__file__).resolve().parent
+CHECKPOINT_PATH = MODEL_DIR / "checkpoints" / "model4_ser_mfcc_6class_best.pt"
 
 MIC_SAMPLE_RATE = 44100
 SAMPLE_RATE = 16000

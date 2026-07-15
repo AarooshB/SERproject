@@ -32,7 +32,11 @@ from sklearn.metrics import (classification_report, confusion_matrix,
                              f1_score, accuracy_score)
 from sklearn.model_selection import GroupKFold
 
-from model_v6 import EmbeddingHead, FocalLoss
+from pathlib import Path
+
+from model import EmbeddingHead, FocalLoss
+
+MODEL_DIR = Path(__file__).resolve().parent
 
 EMOTIONS = ["neutral_calm", "happy", "sad", "angry", "disgust", "surprised"]
 NUM_CLASSES = len(EMOTIONS)
@@ -81,7 +85,7 @@ def train_head(X_tr, y_tr, X_va, head_kind, loss_kind, epochs, lr, wd,
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--emb", default="ravdess_embeddings_v6.npz")
+    ap.add_argument("--emb", default=str(MODEL_DIR / "embeddings" / "ravdess_embeddings_v6.npz"))
     ap.add_argument("--head", choices=["linear", "mlp1", "mlp2"], default="mlp1")
     ap.add_argument("--loss", choices=["wce", "focal"], default="wce")
     ap.add_argument("--gamma", type=float, default=1.5)
@@ -91,7 +95,7 @@ def main():
     ap.add_argument("--wd", type=float, default=1e-3)
     ap.add_argument("--dropout", type=float, default=0.3)
     ap.add_argument("--feat_dropout", type=float, default=0.1)
-    ap.add_argument("--out_dir", default="week6_out")
+    ap.add_argument("--out_dir", default=str(MODEL_DIR / "results"))
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)

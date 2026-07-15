@@ -28,7 +28,8 @@ from torch.utils.data import Dataset, DataLoader
 # Config
 # -------------------------
 
-FEAT_DIR = Path("features_v5_norm")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+FEAT_DIR = REPO_ROOT / "features" / "v5_norm"
 BATCH_SIZE = 64
 EPOCHS = 60
 LR = 3e-4

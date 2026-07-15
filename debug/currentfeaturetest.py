@@ -1,10 +1,16 @@
 import os
+import sys
+from pathlib import Path
+
 import numpy as np
 import torch
 
-from livetest import SERNetMid, CLASS_NAMES, CHECKPOINT_PATH
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "models" / "model_04_bigru"))
 
-FEATURE_DIR = "features_mfcc_norm"
+from live_infer import SERNetMid, CLASS_NAMES, CHECKPOINT_PATH
+
+FEATURE_DIR = REPO_ROOT / "features" / "mfcc_norm"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

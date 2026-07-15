@@ -39,15 +39,19 @@ RAVDESS + CREMA-D:
 import argparse
 import glob
 import os
+from pathlib import Path
 
 import numpy as np
 import torch
 import librosa
 
 from transformers import AutoFeatureExtractor
-from model import DISTILHUBERT_NAME, SAMPLE_RATE
+from backbone import DISTILHUBERT_NAME, SAMPLE_RATE
 from transformers import HubertModel
 
+MODEL_DIR = Path(__file__).resolve().parent
+REPO_ROOT = MODEL_DIR.parents[1]
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 EMOTIONS = ["neutral_calm", "happy", "sad", "angry", "disgust", "surprised"]
@@ -173,12 +177,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ravdess_dir", required=True)
     ap.add_argument("--include_cremad", action="store_true")
-    ap.add_argument("--cremad_dir", default="/home/vinod/SERproject/CREMA-D")
+    ap.add_argument("--cremad_dir", default=str(REPO_ROOT / "data" / "cremad"))
     ap.add_argument("--n_aug", type=int, default=2,
                     help="augmented copies per TRAINING clip (0 = clean only)")
     ap.add_argument("--risky_aug", action="store_true",
                     help="also apply pitch/speed shift (may corrupt labels)")
-    ap.add_argument("--out", default="ravdess_embeddings_v6.npz")
+    ap.add_argument("--out", default=str(MODEL_DIR / "embeddings" / "ravdess_embeddings_v6.npz"))
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 

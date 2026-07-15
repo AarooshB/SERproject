@@ -12,10 +12,10 @@ Changes:
 - Resets smoothing during silence so it does not get stuck on sad
 
 Run:
-  python live_infer_v6.py --source mic --ckpt week6_out/best_model.pt --device 0
+  python live_infer.py --source mic --ckpt models/model_06_distilhubert/results/best_model.pt --device 0
 
 Sim:
-  python live_infer_v6.py --source sim --ckpt week6_out/best_model.pt --wav sample.wav
+  python live_infer.py --source sim --ckpt models/model_06_distilhubert/results/best_model.pt --wav sample.wav
 """
 
 import argparse
@@ -28,8 +28,13 @@ import numpy as np
 import torch
 
 from transformers import AutoFeatureExtractor, HubertModel
-from model import DISTILHUBERT_NAME, SAMPLE_RATE
-from model_v6 import EmbeddingHead
+from pathlib import Path
+
+from backbone import DISTILHUBERT_NAME, SAMPLE_RATE
+from model import EmbeddingHead
+
+MODEL_DIR = Path(__file__).resolve().parent
+DEFAULT_CKPT = MODEL_DIR / "results" / "best_model.pt"
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -308,7 +313,7 @@ def main():
 
     parser.add_argument(
         "--ckpt",
-        default="week6_out/best_model.pt",
+        default=str(DEFAULT_CKPT),
     )
 
     parser.add_argument(

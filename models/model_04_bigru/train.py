@@ -15,22 +15,19 @@ from torch.utils.data import Dataset, DataLoader
 # Config
 # -------------------------
 
-MFCC_DIR = Path("features_mfcc_norm")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MODEL_DIR = Path(__file__).resolve().parent
+MFCC_DIR = REPO_ROOT / "features" / "mfcc_norm"
 BATCH_SIZE = 32
-EPOCHS = 80
+EPOCHS = 100
 LR = 3e-4
 WEIGHT_DECAY = 1e-4
-PATIENCE = 14
+PATIENCE = 16
 NUM_CLASSES = 6
 TARGET_FRAMES = 130
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# 6-class map:
-# neutral + calm merged
-# fearful dropped
-# original RAVDESS emotion codes:
-# 01 neutral, 02 calm, 03 happy, 04 sad, 05 angry, 06 fearful, 07 disgust, 08 surprised
 EMOTION_MAP = {
     "01": 0,  # neutral_calm
     "02": 0,  # neutral_calm
@@ -82,17 +79,12 @@ def get_label(path):
 
 
 def fix_shape_and_length(x, target_frames=TARGET_FRAMES):
-    """
-    Model expects [features, time], usually [120, T].
-    """
     if x.ndim != 2:
         raise ValueError(f"Expected 2D feature array, got shape {x.shape}")
 
-    # If saved as [time, 120], transpose.
     if x.shape[1] == 120 and x.shape[0] != 120:
         x = x.T
 
-    # If saved correctly, keep it.
     if x.shape[0] != 120:
         raise ValueError(f"Expected 120 feature channels, got shape {x.shape}")
 
@@ -125,17 +117,30 @@ class RavdessMFCCDataset(Dataset):
         return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.long)
 
     def augment_features(self, x):
-        # Light augmentation only. Previous run likely over-regularized.
+        # x: [120, T]
+        x = x.copy()
 
-        # Small Gaussian noise
-        if random.random() < 0.5:
+        # Small Gaussian noise (kept from model 3)
+        if random.random() < 0.4:
             noise = np.random.normal(0, 0.015, size=x.shape).astype(np.float32)
             x = x + noise
 
-        # Small time shift
-        if random.random() < 0.5:
+        # Small time shift (kept from model 3)
+        if random.random() < 0.4:
             shift = random.randint(-5, 5)
             x = np.roll(x, shift, axis=1)
+
+        # NEW: SpecAugment-style time masking (zero out a random chunk of frames)
+        if random.random() < 0.5:
+            t = random.randint(5, 18)
+            t0 = random.randint(0, max(0, x.shape[1] - t))
+            x[:, t0:t0 + t] = 0.0
+
+        # NEW: SpecAugment-style channel/frequency masking
+        if random.random() < 0.5:
+            f = random.randint(3, 10)
+            f0 = random.randint(0, max(0, x.shape[0] - f))
+            x[f0:f0 + f, :] = 0.0
 
         return x
 
@@ -163,12 +168,38 @@ class SeparableConv1d(nn.Module):
         return x
 
 
-class SERNetMid(nn.Module):
+class AttentiveStatsPooling(nn.Module):
     """
-    Middle-size model.
-    Old model overfit: 64 -> 96 -> 128.
-    Tiny model underfit/collapsed: 32 -> 48 -> 64.
-    This uses 48 -> 64 -> 96.
+    Learns per-frame attention weights, then summarizes the sequence
+    with an attention-weighted mean AND std. Output dim = 2 * channels.
+
+    Compared to plain global average pooling, this lets the model focus on
+    the emotionally informative frames and keep information about how much
+    the features VARY over time (key for sad vs neutral, happy vs surprised).
+    """
+    def __init__(self, channels, attn_dim=64):
+        super().__init__()
+        self.attn = nn.Sequential(
+            nn.Conv1d(channels, attn_dim, kernel_size=1),
+            nn.Tanh(),
+            nn.Conv1d(attn_dim, channels, kernel_size=1),
+        )
+
+    def forward(self, x):
+        # x: [B, C, T]
+        w = torch.softmax(self.attn(x), dim=2)          # [B, C, T]
+        mean = torch.sum(x * w, dim=2)                  # [B, C]
+        var = torch.sum((x ** 2) * w, dim=2) - mean ** 2
+        std = torch.sqrt(var.clamp(min=1e-6))           # [B, C]
+        return torch.cat([mean, std], dim=1)            # [B, 2C]
+
+
+class SERNetV4(nn.Module):
+    """
+    Model 4.
+    Same conv trunk as model 3 (48 -> 64 -> 96), but:
+      - a small BiGRU on top of the conv features to model temporal order
+      - attentive statistics pooling instead of global average pooling
     """
     def __init__(self, input_channels=120, num_classes=6):
         super().__init__()
@@ -187,19 +218,31 @@ class SERNetMid(nn.Module):
             nn.Dropout(0.25),
 
             SeparableConv1d(96, 96, kernel_size=3, padding=1),
-            nn.AdaptiveAvgPool1d(1),
         )
 
+        self.gru = nn.GRU(
+            input_size=96,
+            hidden_size=64,
+            num_layers=1,
+            batch_first=True,
+            bidirectional=True,
+        )
+
+        self.pool = AttentiveStatsPooling(channels=128)  # BiGRU output = 2*64
+
         self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(96, 64),
+            nn.Linear(256, 96),   # pooled dim = 2 * 128
             nn.ReLU(),
             nn.Dropout(0.35),
-            nn.Linear(64, num_classes),
+            nn.Linear(96, num_classes),
         )
 
     def forward(self, x):
-        x = self.features(x)
+        x = self.features(x)          # [B, 96, T']
+        x = x.transpose(1, 2)         # [B, T', 96]
+        x, _ = self.gru(x)            # [B, T', 128]
+        x = x.transpose(1, 2)         # [B, 128, T']
+        x = self.pool(x)              # [B, 256]
         x = self.classifier(x)
         return x
 
@@ -211,7 +254,6 @@ def get_split_files():
     for f in all_files:
         emotion_code, actor_id = parse_ravdess_filename(f)
 
-        # Drop fearful for this 6-class experiment.
         if emotion_code not in EMOTION_MAP:
             continue
 
@@ -301,12 +343,13 @@ def main():
     val_ds = RavdessMFCCDataset(val_files, augment=False)
     test_ds = RavdessMFCCDataset(test_files, augment=False)
 
-    # Normal shuffle only. No weighted sampler this time.
     train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
     val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
     test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 
-    model = SERNetMid(input_channels=120, num_classes=NUM_CLASSES).to(DEVICE)
+    model = SERNetV4(input_channels=120, num_classes=NUM_CLASSES).to(DEVICE)
+    n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Trainable params: {n_params:,}")
 
     criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.03)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
@@ -319,7 +362,7 @@ def main():
 
     best_val_f1 = 0.0
     bad_epochs = 0
-    save_path = "model3_ser_mfcc_6class_best.pt"
+    save_path = MODEL_DIR / "checkpoints" / "model4_ser_mfcc_6class_best.pt"
 
     for epoch in range(1, EPOCHS + 1):
         train_loss, train_acc, train_f1 = run_epoch(model, train_loader, criterion, optimizer)
