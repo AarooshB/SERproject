@@ -1,80 +1,128 @@
 # Real-Time Speech Emotion Recognition on Edge Devices
 
-Real-time Speech Emotion Recognition (SER) using deep learning and transformer-based speech models.
+Real-time Speech Emotion Recognition (SER) using deep learning and pretrained speech transformers, designed for efficient deployment on edge hardware.
 
-This project explores automatic speech emotion recognition from audio recordings using both traditional deep learning architectures and pretrained speech transformers. The primary goal is to build a model that can classify human emotions from speech while remaining lightweight enough for real-time deployment on NVIDIA Jetson devices.
+This project investigates how modern speech foundation models can be adapted for real-time emotion recognition while remaining lightweight enough for deployment on embedded devices such as the NVIDIA Jetson series. Throughout development, multiple CNN and hybrid architectures were evaluated before converging on a frozen DistilHuBERT encoder with a lightweight MLP classifier, providing strong accuracy with low inference cost.
 
-DEMO LINK:
+**Author:** Aaroosh Balakrishnan
+**University:** University of California, Los Angeles (UCLA)
+
+## Demo
+
+**Video Demo**
+
 https://drive.google.com/drive/u/0/folders/1DE4-ThQO9VLnjqozcJXxqJOTWTJzuThR
----
-
-## Highlights
-
-* Speaker-independent emotion recognition using the RAVDESS dataset
-* Evaluated multiple CNN and transformer-based architectures
-* Achieved **74.8% Macro F1** using DistilHuBERT embeddings with an MLP classifier
-* Built a real-time microphone inference pipeline
-* Optimized for deployment on NVIDIA Jetson edge devices
 
 ---
 
-## Project Pipeline
+# Features
+
+* Real-time speech emotion recognition from a microphone
+* Speaker-independent evaluation
+* DistilHuBERT transformer embeddings
+* Lightweight MLP classifier for efficient inference
+* Six emotion classification
+* Live command line inference
+* Optimized for future NVIDIA Jetson deployment
+* Modular training and inference pipeline
+
+---
+
+# Supported Emotions
+
+The model predicts one of the following six emotions.
+
+| Label | Emotion        |
+| ----: | -------------- |
+|     0 | Neutral / Calm |
+|     1 | Happy          |
+|     2 | Sad            |
+|     3 | Angry          |
+|     4 | Disgust        |
+|     5 | Surprised      |
+
+---
+
+# Project Pipeline
 
 ```text
-Audio Input
-     │
-     ▼
-Preprocessing
-(Resample, Normalize)
-     │
-     ▼
-Feature Extraction
-(MFCC / DistilHuBERT)
-     │
-     ▼
+Live Microphone
+      │
+      ▼
+Audio Preprocessing
+(Resample + Normalize)
+      │
+      ▼
+Frozen DistilHuBERT Encoder
+      │
+      ▼
+768-D Embedding
+      │
+      ▼
 MLP Classifier
-     │
-     ▼
+      │
+      ▼
 Emotion Prediction
-     │
-     ▼
+      │
+      ▼
 Temporal Smoothing
-     │
-     ▼
-Live Emotion Output
+      │
+      ▼
+Live Terminal Output
 ```
 
 ---
 
-## Dataset
+# Results
 
-### RAVDESS
+## Final Model Performance
 
-The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS) is used as the primary benchmark dataset.
+| Metric                    |                                       Value |
+| ------------------------- | ------------------------------------------: |
+| Accuracy                  |                                   **74.7%** |
+| Pooled Macro F1           |                                  **0.7500** |
+| Cross Validation Macro F1 |                         **0.7480 ± 0.0691** |
+| Evaluation                | 6-Fold Speaker Independent Cross Validation |
 
-**Features**
+## Per-Class Performance
 
-* 24 professional actors
-* High-quality speech recordings
-* Balanced emotion classes
-* Widely used benchmark for Speech Emotion Recognition
+| Emotion        | Precision | Recall |     F1 |
+| -------------- | --------: | -----: | -----: |
+| Neutral / Calm |    0.8405 | 0.6771 | 0.7500 |
+| Happy          |    0.6147 | 0.6979 | 0.6537 |
+| Sad            |    0.5702 | 0.6771 | 0.6190 |
+| Angry          |    0.8182 | 0.8438 | 0.8308 |
+| Disgust        |    0.8764 | 0.8125 | 0.8432 |
+| Surprised      |    0.7990 | 0.8073 | 0.8031 |
 
-**Emotions Classified**
-
-* Neutral / Calm
-* Happy
-* Sad
-* Angry
-* Disgust
-* Surprised
+The final DistilHuBERT model substantially outperformed every previous architecture while remaining computationally efficient enough for real-time inference.
 
 ---
 
-## Model Evolution
+# Dataset
 
-This project was developed through several iterations, with each version addressing weaknesses identified in the previous model.
+## RAVDESS
 
-### Model 1
+Primary benchmark dataset.
+
+Features:
+
+* 24 professional actors
+* Balanced emotion classes
+* High-quality recordings
+* Speaker-independent evaluation
+
+## CREMA-D
+
+Used during later development to improve robustness and increase dataset diversity.
+
+---
+
+# Model Development
+
+The project evolved through six major iterations.
+
+## Model 1
 
 * MFCC features
 * Lightweight 1D CNN
@@ -82,197 +130,195 @@ This project was developed through several iterations, with each version address
 * Dropout
 * Global Average Pooling
 
-**Result:** Established the initial baseline.
+Result:
+
+Initial working baseline.
 
 ---
 
-### Model 2
+## Model 2
 
 Changes:
 
-* Reduced model width to decrease overfitting
+* Smaller CNN architecture
 
-**Result:** Performance decreased.
+Result:
+
+Reduced overfitting but decreased overall accuracy.
 
 ---
 
-### Model 3
+## Model 3
 
 Improvements:
 
-* Combined Neutral and Calm into one class
-* Better class balancing
-* Weighted Cross Entropy loss
-* Improved data augmentation
+* Combined Neutral and Calm
+* Improved class balancing
+* Weighted Cross Entropy
+* Better augmentation
 
-**Result:** Improved overall performance.
+Result:
+
+Improved overall classification performance.
 
 ---
 
-### Model 4
+## Model 4
 
 Added:
 
-* BiGRU temporal modeling
+* BiGRU
 * Attentive Statistics Pooling
 * SpecAugment
 * Time masking
 * Feature masking
 
-**Result**
+Result:
 
-* No significant improvement
-* Continued confusion between Happy, Sad, and Neutral emotions
+Minimal improvement. Continued confusion between Happy, Sad, and Neutral.
 
 ---
 
-### Model 5
+## Model 5
 
 Added:
 
-* CREMA-D dataset
+* CREMA-D
 * Pitch features
-* Speaker-independent cross validation
+* Speaker-independent validation
 
-**Result**
+Result:
 
-* Improved validation performance
-* Better recognition of Sad emotion
-* Limited generalization on unseen speakers
+Improved validation accuracy but limited unseen speaker generalization.
 
 ---
 
-### Model 6 (Current Model)
+## Model 6 (Current)
 
 Major improvements:
 
-* DistilHuBERT pretrained embeddings
-* Stronger MLP classifier
-* LayerNorm
-* Dropout
+* Frozen DistilHuBERT encoder
+* LayerNorm MLP classifier
 * Feature Dropout
 * Speaker-aware cross validation
 * Focal Loss
 * Weighted Cross Entropy
-* Improved augmentation pipeline
-* Real-time inference support
+* Improved augmentation
+* Live inference pipeline
 
-**Result:** Best-performing model to date.
+Result:
+
+Current production model with the highest overall performance.
 
 ---
 
-## Feature Extraction
+# Feature Extraction
 
-### CNN Models
+## Earlier Models
 
-* MFCCs
-* Delta MFCCs
-* Delta-Delta MFCCs
-* Normalization
+* MFCC
+* Delta MFCC
+* Delta-Delta MFCC
+* Feature normalization
 
-### DistilHuBERT Models
+## Current Model
 
-Instead of handcrafted acoustic features, the latest models use frozen DistilHuBERT embeddings extracted from raw speech.
+The latest architecture replaces handcrafted features with pretrained DistilHuBERT embeddings extracted directly from raw speech.
 
-**Advantages**
+Advantages:
 
-* Rich pretrained speech representations
+* Strong pretrained speech representations
 * Faster than Wav2Vec2
+* Lightweight inference
+* Better transfer learning
 * Suitable for edge deployment
-* Strong transfer learning performance
 
 ---
 
-## Training Strategy
+# Training Strategy
 
-Training includes:
+Training uses:
 
 * Speaker-independent cross validation
 * Weighted Cross Entropy
 * Focal Loss
 * Early stopping
 * Learning rate scheduling
-* Data augmentation
 
-**Augmentations**
+Augmentation includes:
 
 * Noise injection
-* Gain augmentation
+* Random gain
 
-Validation data is kept completely clean to prevent data leakage.
-
----
-
-## Results
-
-### Final Model 6 Results
-
-| Metric                    |                                       Value |
-| :------------------------ | ------------------------------------------: |
-| Accuracy                  |                                   **74.7%** |
-| Pooled Macro F1           |                                  **0.7500** |
-| Cross Validation Macro F1 |                         **0.7480 ± 0.0691** |
-| Evaluation                | 6-fold Speaker-Independent Cross Validation |
-
-### Per-Class Performance
-
-| Emotion        | Precision | Recall | F1 Score |
-| :------------- | --------: | -----: | -------: |
-| Neutral / Calm |    0.8405 | 0.6771 |   0.7500 |
-| Happy          |    0.6147 | 0.6979 |   0.6537 |
-| Sad            |    0.5702 | 0.6771 |   0.6190 |
-| Angry          |    0.8182 | 0.8438 |   0.8308 |
-| Disgust        |    0.8764 | 0.8125 |   0.8432 |
-| Surprised      |    0.7990 | 0.8073 |   0.8031 |
-
-The DistilHuBERT model significantly outperformed the earlier CNN-based approaches while maintaining low inference cost suitable for real-time deployment.
+Validation data is kept clean to avoid leakage.
 
 ---
 
-## Repository Structure
+# Installation
 
-```text
-SERproject/
-├── README.md
-├── requirements.txt
-│
-├── data/
-│   ├── ravdess/              # RAVDESS dataset (Actor_01 .. Actor_24)
-│   ├── all_audio/            # Flat RAVDESS wavs for feature extraction
-│   └── cremad/               # CREMA-D dataset (AudioWAV/)
-│
-├── features/
-│   ├── mfcc/                 # Raw MFCC features
-│   ├── mfcc_norm/            # Normalized MFCC (models 1–4)
-│   ├── mel/                  # Mel spectrogram features
-│   └── v5_norm/              # Model 5 combined features
-│
-├── models/
-│   ├── model_01_mfcc_cnn/
-│   ├── model_02_mfcc_cnn_narrow/
-│   ├── model_03_balanced/
-│   ├── model_04_bigru/
-│   ├── model_05_cremad/
-│   └── model_06_distilhubert/   # Main model
-│       ├── backbone.py
-│       ├── model.py
-│       ├── extract_embeddings.py
-│       ├── train.py
-│       ├── live_infer.py
-│       ├── embeddings/
-│       ├── checkpoints/
-│       └── results/             # Training outputs (was week6_out)
-│
-├── notebooks/
-├── scripts/
-└── debug/
+Clone the repository.
+
+```bash
+git clone https://github.com/AarooshB/SERproject.git
+
+cd SERproject
+```
+
+Install dependencies.
+
+```bash
+pip install -r requirements.txt
 ```
 
 ---
 
-## Running the Project
+# Quick Start
 
-### 1. Extract DistilHuBERT Embeddings
+If a trained checkpoint is available, launch live inference directly.
+
+```bash
+python models/model_06_distilhubert/live_infer.py \
+    --source mic \
+    --ckpt models/model_06_distilhubert/results/best_model.pt
+```
+
+The application will:
+
+1. Listen through the microphone.
+2. Extract DistilHuBERT embeddings.
+3. Predict the current emotion.
+4. Display predictions in real time.
+
+Example output:
+
+```text
+Listening...
+
+Prediction: Happy
+Confidence: 0.91
+
+Prediction: Angry
+Confidence: 0.88
+```
+
+---
+
+# Running on an Audio File
+
+```bash
+python models/model_06_distilhubert/live_infer.py \
+    --source sim \
+    --wav path/to/audio.wav \
+    --ckpt models/model_06_distilhubert/results/best_model.pt
+```
+
+---
+
+# Training From Scratch
+
+## Step 1
+
+Extract embeddings.
 
 ```bash
 python models/model_06_distilhubert/extract_embeddings.py \
@@ -282,7 +328,11 @@ python models/model_06_distilhubert/extract_embeddings.py \
     --n_aug 2
 ```
 
-### 2. Train the Model
+---
+
+## Step 2
+
+Train the classifier.
 
 ```bash
 python models/model_06_distilhubert/train.py \
@@ -292,7 +342,17 @@ python models/model_06_distilhubert/train.py \
     --folds 6
 ```
 
-### 3. Run Live Inference
+Training checkpoints are saved to:
+
+```text
+models/model_06_distilhubert/results/
+```
+
+---
+
+## Step 3
+
+Run live inference.
 
 ```bash
 python models/model_06_distilhubert/live_infer.py \
@@ -302,7 +362,62 @@ python models/model_06_distilhubert/live_infer.py \
 
 ---
 
-## Technologies
+# Command Line Options
+
+## live_infer.py
+
+| Argument       | Description           |
+| -------------- | --------------------- |
+| `--source mic` | Live microphone input |
+| `--source sim` | Audio file inference  |
+| `--wav`        | Path to WAV file      |
+| `--ckpt`       | Model checkpoint      |
+
+---
+
+# Repository Structure
+
+```text
+SERproject/
+│
+├── README.md
+├── requirements.txt
+│
+├── data/
+│   ├── ravdess/
+│   ├── all_audio/
+│   └── cremad/
+│
+├── features/
+│   ├── mfcc/
+│   ├── mfcc_norm/
+│   ├── mel/
+│   └── v5_norm/
+│
+├── models/
+│   ├── model_01_mfcc_cnn/
+│   ├── model_02_mfcc_cnn_narrow/
+│   ├── model_03_balanced/
+│   ├── model_04_bigru/
+│   ├── model_05_cremad/
+│   └── model_06_distilhubert/
+│       ├── backbone.py
+│       ├── model.py
+│       ├── extract_embeddings.py
+│       ├── train.py
+│       ├── live_infer.py
+│       ├── embeddings/
+│       ├── checkpoints/
+│       └── results/
+│
+├── notebooks/
+├── scripts/
+└── debug/
+```
+
+---
+
+# Technologies
 
 * Python
 * PyTorch
@@ -315,22 +430,41 @@ python models/model_06_distilhubert/live_infer.py \
 
 ---
 
-## Future Work
+# Future Work
 
-* Improve Happy emotion recognition
-* Reduce confusion between Neutral and Sad
 * Fine-tune the DistilHuBERT backbone
-* Incorporate additional speech emotion datasets
-* Optimize inference using TensorRT
-* Quantize the model for faster edge deployment
-* Extend the system to multimodal emotion recognition using audio and facial expressions
+* Improve Happy emotion recognition
+* Reduce Neutral and Sad confusion
+* Expand training with additional datasets
+* TensorRT optimization
+* Model quantization for embedded deployment
+* Real-time facial emotion fusion
+* Full NVIDIA Jetson deployment
 
 ---
 
-## Author
+# Acknowledgments
+
+* RAVDESS Dataset
+* CREMA-D Dataset
+* Hugging Face Transformers
+* PyTorch
+* NVIDIA Jetson Platform
+
+---
+
+# License
+
+This project is intended for research and educational purposes.
+
+---
+
+# Contact
 
 **Aaroosh Balakrishnan**
 
-University of California, Los Angeles (UCLA)
+GitHub: https://github.com/AarooshB
 
-GitHub: https://github.com/AarooshB/SERproject
+Project Repository:
+
+https://github.com/AarooshB/SERproject
